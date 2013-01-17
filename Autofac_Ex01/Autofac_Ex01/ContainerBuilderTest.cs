@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using NUnit.Framework;
 using Autofac;
+using Autofac.Core;
 using Autofac.TestAssembly;
 
 namespace Autofac_Ex01
@@ -167,27 +168,116 @@ namespace Autofac_Ex01
         public void RegisterAssemblyModulesOfGenericType()
         {
             var assembly = typeof(AComponent).Assembly;
-            var container = new ContainerBuilder();
-            //container.RegisterAssemblyModules<AModule>(assembly);
-            //or 
-            container.RegisterAssemblyModules(
-            var builder = container.Build();
+            var builder = new ContainerBuilder();
+            builder.RegisterAssemblyModules<AModule>(assembly);
+            var container = builder.Build();
 
-            Assert.That(builder.IsRegistered<AComponent>(), Is.True);
-            Assert.That(builder.IsRegistered<BComponent>(), Is.False);
+            Assert.That(container.IsRegistered<AComponent>(), Is.True);
+            Assert.That(container.IsRegistered<BComponent>(), Is.False);
         }
 
         [Test]
         public void RegisterAssemblyModulesOfBaseGenericType()
         {
             var assembly = typeof(AComponent).Assembly;
-            var container = new ContainerBuilder();
-            container.RegisterAssemblyModules<ModuleBase>(assembly);
+            var builder = new ContainerBuilder();
+            builder.RegisterAssemblyModules<ModuleBase>(assembly);
 
-            var builder = container.Build();
+            var container = builder.Build();
 
-            Assert.That(builder.IsRegistered<AComponent>(), Is.True);
-            Assert.That(builder.IsRegistered<BComponent>(), Is.True);
+            Assert.That(container.IsRegistered<AComponent>(), Is.True);
+            Assert.That(container.IsRegistered<BComponent>(), Is.True);
+        }
+
+        [Test]
+        [ExpectedException(typeof(InvalidOperationException))]
+        public void OnlyAllowBuildOnce()
+        {
+            var target = new ContainerBuilder();
+            target.Build();
+            target.Build();
+        }
+
+        [Test]
+        public void RegisterWithName()
+        {
+            var name = "object.registration";
+            var builder = new ContainerBuilder();
+            builder.RegisterType<object>().Named<object>(name);
+
+            var container = builder.Build();
+
+            object obj1;
+            Assert.IsTrue(container.TryResolveNamed(name, typeof(object), out obj1));
+
+            object obj2;
+            Assert.IsFalse(container.TryResolve(typeof(object), out obj2));
+        }
+
+        [Test]
+        public void RegisterWithKey()
+        {
+            var key = new object();
+            var builder = new ContainerBuilder();
+            builder.RegisterType<object>().Keyed<object>(key);
+
+            var container = builder.Build();
+
+            object obj1;
+            Assert.IsTrue(container.TryResolveKeyed(key, typeof(object), out obj1));
+            object obj2;
+            Assert.IsFalse(container.TryResolve(typeof(object), out obj1));
+        }
+
+        [Test]
+        public void RegisterWithMetadata()
+        {
+            var p1 = new KeyValuePair<string, object>("p1", "p1value");
+            var p2 = new KeyValuePair<string, object>("p2", "p2value");
+
+            var builder = new ContainerBuilder();
+            builder.RegisterType<object>()
+                .WithMetadata(p1.Key, p1.Value)
+                .WithMetadata(p2.Key, p2.Value);
+
+            var container = builder.Build();
+
+            IComponentRegistration registration;
+            Assert.IsTrue(container.ComponentRegistry.TryGetRegistration(new TypedService(typeof(object)), out registration));
+
+            Assert.AreEqual(2, registration.Metadata.Count);
+            Assert.IsTrue(registration.Metadata.Contains(p1));
+            Assert.IsTrue(registration.Metadata.Contains(p2));
+        }
+
+        [Test]
+        public void FiresPreparing()
+        {
+            //在builder之后preparingFired不会加1
+            //必须Resolve后才会改变值
+
+            int preparingFired = 0;
+            var builder = new ContainerBuilder();
+            builder.RegisterType<object>().OnPreparing(c => ++preparingFired);
+
+            var container = builder.Build();
+
+            container.Resolve<object>();
+            Assert.AreEqual(1, preparingFired);
+        }
+
+        [Test]
+        public void WhenPreparingHandlerProvidesParameters_ParamsProvidedToActivator()
+        {
+            IEnumerable<Parameter> parameters = new Parameter[] { new NamedParameter("n", 1) };
+            IEnumerable<Parameter> actual = null;
+            var cb = new ContainerBuilder();
+            cb.RegisterType<object>()
+                .OnPreparing(e => e.Parameters = parameters)
+                .OnActivating(e => actual = e.Parameters);
+            var container = cb.Build();
+            container.Resolve<object>();
+            Assert.False(parameters.Except(actual).Any());
         }
     }
 }
