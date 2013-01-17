@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using NUnit.Framework;
 using Autofac;
+using Autofac.TestAssembly;
 
 namespace Autofac_Ex01
 {
@@ -146,6 +147,47 @@ namespace Autofac_Ex01
             var container = target.Build();
             Assert.IsTrue(mod.ConfigureCalled);
             Assert.IsTrue(container.IsRegistered<object>());
+        }
+
+        [Test]
+        public void RegisterAssemblyModules()
+        {
+            var assembly = typeof(AComponent).Assembly;
+            var container = new ContainerBuilder();
+            container.RegisterAssemblyModules(assembly);
+
+            var builder = container.Build();
+
+            Assert.IsTrue(builder.IsRegistered<AComponent>());
+            Assert.That(builder.IsRegistered<AComponent>(), Is.True);
+            Assert.That(builder.IsRegistered<BComponent>(), Is.True);
+        }
+
+        [Test]
+        public void RegisterAssemblyModulesOfGenericType()
+        {
+            var assembly = typeof(AComponent).Assembly;
+            var container = new ContainerBuilder();
+            //container.RegisterAssemblyModules<AModule>(assembly);
+            //or 
+            container.RegisterAssemblyModules(
+            var builder = container.Build();
+
+            Assert.That(builder.IsRegistered<AComponent>(), Is.True);
+            Assert.That(builder.IsRegistered<BComponent>(), Is.False);
+        }
+
+        [Test]
+        public void RegisterAssemblyModulesOfBaseGenericType()
+        {
+            var assembly = typeof(AComponent).Assembly;
+            var container = new ContainerBuilder();
+            container.RegisterAssemblyModules<ModuleBase>(assembly);
+
+            var builder = container.Build();
+
+            Assert.That(builder.IsRegistered<AComponent>(), Is.True);
+            Assert.That(builder.IsRegistered<BComponent>(), Is.True);
         }
     }
 }
