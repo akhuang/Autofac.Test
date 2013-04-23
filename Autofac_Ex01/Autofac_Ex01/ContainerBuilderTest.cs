@@ -43,6 +43,7 @@ namespace Autofac_Ex01
             Assert.IsNotNull(a);
             Assert.IsInstanceOf<AB>(a);
             Assert.IsFalse(container.IsRegistered<AB>());
+            Assert.IsTrue(container.IsRegistered<IA>());
         }
 
         [Test]
