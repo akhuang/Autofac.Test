@@ -53,6 +53,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ContainerBuilderTest.cs" />
+    <Compile Include="MatchingScopeLifetimeTests.cs" />
     <Compile Include="DisposeTracker.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
