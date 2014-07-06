@@ -21,6 +21,9 @@ namespace Autofac_Ex01
             public void Do() { }
         }
 
+        public class A1 : IA { }
+        public class A2 : IA { }
+
         [Test]
         public void SimpleReg()
         {
@@ -279,6 +282,21 @@ namespace Autofac_Ex01
             var container = cb.Build();
             container.Resolve<object>();
             Assert.False(parameters.Except(actual).Any());
+        }
+
+        [Test]
+        public void RegisterIEnumberabe()
+        {
+            var builder = new ContainerBuilder();
+            builder.RegisterType<A1>().As<IA>();
+            builder.RegisterType<A2>().As<IA>();
+            var container = builder.Build();
+
+            var list = container.Resolve<IEnumerable<IA>>();
+
+            Assert.IsNotNull(list);
+            Assert.True(list.Count() == 2);
+
         }
     }
 }
