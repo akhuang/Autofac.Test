@@ -8,6 +8,7 @@ using Autofac.Core;
 using Autofac.TestAssembly;
 using Autofac.Core.Registration;
 
+
 namespace Autofac_Ex01
 {
     [TestFixture]
@@ -349,6 +350,25 @@ namespace Autofac_Ex01
             var objB = container.Resolve<A1>();
             Assert.IsNotNull(objA);
             Assert.AreSame(objA, objB);
+
+
+        }
+
+        [Test]
+        public void RegisterAssemblyImplemented()
+        {
+            //自动注册某一个Assembly下的所有相关的实现及接口
+            var assembly = typeof(A1).Assembly;
+            var builder = new ContainerBuilder();
+            var registration = builder.RegisterAssemblyTypes(assembly).Where(t => typeof(IA).IsAssignableFrom(t)).AsImplementedInterfaces();
+
+            var container = builder.Build();
+
+            Assert.True(container.Resolve<A1>() != null);
+            var list = container.Resolve<IEnumerable<IA>>();
+
+            Assert.IsNotNull(list);
+            Assert.True(list.Count() == 2);
 
 
         }
