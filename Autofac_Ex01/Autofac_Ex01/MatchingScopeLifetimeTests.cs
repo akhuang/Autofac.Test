@@ -34,13 +34,13 @@ namespace Autofac_Ex01
             Assert.IsNotNull(ex);
             Assert.That(ex.Message.Contains("shell"));
 
-            //var a = container.Resolve<IA>();
-
             var scope = container.BeginLifetimeScope("shell");
             var scopeInstance = scope.Resolve<IA>();
 
-            //Assert.IsNull(a);
             Assert.IsNotNull(scopeInstance);
+
+            var lifetimeScope = container.Resolve<ILifetimeScope>();
+            //lifetimeScope.
         }
     }
 }

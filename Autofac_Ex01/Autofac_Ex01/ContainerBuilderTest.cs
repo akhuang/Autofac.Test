@@ -6,6 +6,7 @@ using NUnit.Framework;
 using Autofac;
 using Autofac.Core;
 using Autofac.TestAssembly;
+using Autofac.Core.Registration;
 
 namespace Autofac_Ex01
 {
@@ -107,6 +108,24 @@ namespace Autofac_Ex01
             Assert.AreNotSame(a1, a2);
             Assert.IsTrue(((AB)a1).IsDisposed);
 
+        }
+
+        [Test]
+        public void WithFactoryContextSingleton()
+        {
+            var cb = new ContainerBuilder();
+            cb.RegisterType<AB>().As<IA>().SingleInstance();
+
+            var container = cb.Build();
+            var ctx = container.BeginLifetimeScope();
+            var a1 = ctx.Resolve<IA>();
+            var a2 = container.Resolve<IA>();
+            ctx.Dispose();
+
+            Assert.IsNotNull(a1);
+            Assert.AreSame(a1, a2);
+            Assert.IsFalse(((AB)a1).IsDisposed);
+            Assert.IsFalse(((AB)a2).IsDisposed);
         }
 
         [Test]
@@ -296,6 +315,41 @@ namespace Autofac_Ex01
 
             Assert.IsNotNull(list);
             Assert.True(list.Count() == 2);
+        }
+
+        [Test]
+        [ExpectedException(typeof(ComponentNotRegisteredException))]
+        public void RegisterWithLifetimeScope()
+        {
+            var builder = new ContainerBuilder();
+
+            var container = builder.Build();
+
+            var lifttimeScope = container.Resolve<ILifetimeScope>();
+
+            Assert.IsNotNull(lifttimeScope);
+
+            lifttimeScope.BeginLifetimeScope(b =>
+            {
+                b.RegisterType<A1>().As<IA>();
+            });
+
+            //cannot resolve IA use container
+            var a1 = container.Resolve<IA>();
+        }
+
+        [Test]
+        public void RegisterGlobalObject()
+        {
+            var builder = new ContainerBuilder();
+            builder.Register(x => new A1()).SingleInstance();
+            var container = builder.Build();
+
+            var objA = container.Resolve<A1>();
+            var objB = container.Resolve<A1>();
+            Assert.IsNotNull(objA);
+            Assert.AreSame(objA, objB);
+
 
         }
     }
