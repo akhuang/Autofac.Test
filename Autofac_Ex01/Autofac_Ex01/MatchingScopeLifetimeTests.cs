@@ -22,6 +22,11 @@ namespace Autofac_Ex01
             public void Do() { }
         }
 
+        interface IC { };
+        public class C : IC
+        {
+
+        }
 
         [Test]
         public void InstancePerMatchingLifetimeScope()
@@ -34,13 +39,20 @@ namespace Autofac_Ex01
             Assert.IsNotNull(ex);
             Assert.That(ex.Message.Contains("shell"));
 
-            var scope = container.BeginLifetimeScope("shell");
+            var scope = container.BeginLifetimeScope("shell", x =>
+            {
+                x.RegisterType<C>().As<IC>();
+            });
             var scopeInstance = scope.Resolve<IA>();
 
             Assert.IsNotNull(scopeInstance);
 
             var lifetimeScope = container.Resolve<ILifetimeScope>();
             //lifetimeScope.
+
+            var cInstance = scope.Resolve<IC>();
+
+            Assert.IsNotNull(cInstance);
         }
     }
 }
